@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Build artifacts
+dist/
+build/
+
+# Coverage reports
+coverage/
+
+# Docker files (optional)
+docker-compose.override.yml
+
+# PostgreSQL local data (if any)
+pgdata/
+
+# Misc
+*.pid
+*.seed

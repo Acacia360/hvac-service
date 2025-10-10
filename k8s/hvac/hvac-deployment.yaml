@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hvac-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hvac-service
+  template:
+    metadata:
+      labels:
+        app: hvac-service
+    spec:
+      containers:
+        - name: hvac-service
+          image: hvac-service:1.0
+          ports:
+            - containerPort: 3029
+          envFrom:
+            - configMapRef:
+                name: hvac-config

@@ -1,0 +1,14 @@
+  ath-service:
+    build: ./hvac-service
+    container_name: hvac-service
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: hvac_db
+      JWT_SECRET: supersecretkey
+    ports:
+      - "4000:4000"
