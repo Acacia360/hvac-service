@@ -11,7 +11,7 @@ const HVACData = sequelize.define('HVACData', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'HVAC',
+      model: 'HVACs',
       key: 'hvac_id',
     },
   },

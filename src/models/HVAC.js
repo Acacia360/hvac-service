@@ -105,7 +105,7 @@ const HVAC = sequelize.define('HVAC', {
     }
 }, {
     timestamps: false,
-    tableName: 'HVAC'
+    tableName: 'HVACs'
 });
 
 module.exports = HVAC;

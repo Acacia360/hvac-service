@@ -12,7 +12,6 @@ const db = {
   APILogs
 };
 
-// Define associations
 HVAC.hasMany(HVACData, {
   foreignKey: 'hvac_id',
 });
