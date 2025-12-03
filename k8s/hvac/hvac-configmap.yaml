@@ -1,3 +1,4 @@
+# HVAC Configmap
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,8 +7,5 @@ data:
   PORT: "3029"
   DB_HOST: "192.168.1.135"
   DB_PORT: "5432"
-  DB_USER: "postgres"
-  DB_PASSWORD: "postgres"
   DB_NAME: "hvac_db"
-  JWT_SECRET: "supersecretkey"
 
