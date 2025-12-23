@@ -2,6 +2,7 @@ const db = require("./src/models");
 
 const hvacs = [
     {
+        hvac_id: "ACWCXYZ1234",
         hvac_name: "HVAC Unit 1",
         hvac_brand: "Mitsubishi Electric",
         hvac_model: "AE-200",
@@ -33,6 +34,7 @@ const hvacs = [
         hvac_notes: "Main unit for public areas. High priority maintenance."
     },
     {
+        hvac_id: "ACWCABC5678",
         hvac_name: "HVAC Unit 2",
         hvac_brand: "Mitsubishi Electric",
         hvac_model: "AE-50",

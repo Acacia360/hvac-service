@@ -32,3 +32,6 @@ pgdata/
 # Misc
 *.pid
 *.seed
+
+# Environment variables file
+.env
