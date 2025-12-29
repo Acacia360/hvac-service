@@ -2,7 +2,6 @@ const express = require("express");
 const cors = require("cors");
 
 const hvacRoutes = require("./routes/hvac");
-const hvacDataRoutes = require("./routes/hvacData");
 const logRoutes = require('./routes/logRoutes');
 
 const { standardAPILogger, errorAPILogger } = require("./middlewares/apiLogger");
@@ -18,7 +17,6 @@ app.use(express.json());
 app.use(standardAPILogger());
 
 app.use("/api/hvac", hvacRoutes);
-app.use("/api/hvacData", hvacDataRoutes);
 app.use('/api/hvacLogs', logRoutes);
 
 app.get("/health", (req, res) => res.status(200).send("OK"));

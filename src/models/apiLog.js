@@ -1,9 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
   const API_Logs = sequelize.define('API_Logs', {
     id: {
-      type: DataTypes.UUID,
+      type: DataTypes.INTEGER,
       primaryKey: true,
-      defaultValue: DataTypes.UUIDV4
+      autoIncrement: true
     },
     method: {
       type: DataTypes.STRING(10),

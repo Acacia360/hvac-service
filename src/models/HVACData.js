@@ -3,12 +3,12 @@ const sequelize = require('../config/database');
 
 const HVACData = sequelize.define('HVACData', {
   data_id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
+    type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
   },
   hvac_id: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'HVACs',
