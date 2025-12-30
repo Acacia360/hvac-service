@@ -1,14 +1,38 @@
-const { HVAC, HVACData } = require("../models");
-const { Op } = require('sequelize');
+const { HVAC } = require("../models");
+
+const generateHvacId = () => {
+  const prefix = "HVAC";
+  const randomLetters = Array.from({ length: 3 }, () =>
+    String.fromCharCode(65 + Math.floor(Math.random() * 26))
+  ).join('');
+  const randomNum = Math.floor(1000 + Math.random() * 9000);
+  return `${prefix}${randomLetters}${randomNum}`;
+};
 
 // GET all hvacs
 exports.getAllHVACs = async (req, res) => {
   try {
-    const hvacs = await HVAC.findAll();
-    res.json(hvacs);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = (page - 1) * limit;
+
+    const { count, rows } = await HVAC.findAndCountAll({
+      order: [['hvac_id', 'ASC']],
+      limit,
+      offset
+    });
+
+    res.json({
+      message: 'HVACs retrieved successfully',
+      totalRecords: count,
+      currentPage: page,
+      totalPages: Math.ceil(count / limit),
+      pageSize: limit,
+      data: rows
+    });
   } catch (err) {
-    console.error("Failed to fetch hvacs:", err.message);
-    res.status(500).json({ error: "Failed to retrieve hvacs" });
+    console.error('Failed to fetch HVACs:', err.message);
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -30,35 +54,108 @@ exports.getHVACById = async (req, res) => {
 // POST create new hvac
 exports.createHVAC = async (req, res) => {
   const data = req.body;
-  const requiredFields = [
-    "hvac_id", "hvac_name", "hvac_room_ids", "hvac_type", "hvac_brand", "hvac_model", "hvac_serial_number",
-  ];
-  for (const field of requiredFields) {
-    if (!data[field]) {
-      return res.status(400).json({ error: `${field} is required` });
-    }
-  }
+
   try {
-    const result = await HVAC.create(data);
-    res.status(201).json(result);
+    const allowed = [
+      "hvac_name",
+      "hvac_brand",
+      "hvac_model",
+      "hvac_type",
+      "hvac_serial_number",
+      "hvac_manufacture_date",
+      "hvac_installation_date",
+      "hvac_installation_location",
+      "hvac_property_id",
+      "hvac_room_ids",
+      "hvac_connectivity",
+      "hvac_control_method",
+      "hvac_status",
+      "hvac_operation_mode",
+      "hvac_temperature",
+      "hvac_fan_status",
+      "hvac_fan_speed",
+      "hvac_lossnay_fan_speed",
+      "hvac_air_direction",
+      "hvac_ventillation_mode",
+      "hvac_power_source",
+      "hvac_energy_consumption_data",
+      "hvac_schedule_status",
+      "hvac_schedule_settings",
+      "hvac_notification_settings",
+      "hvac_maintenance_logs",
+      "hvac_last_maintenance_date",
+      "hvac_warranty_expiration",
+      "hvac_notes"
+    ];
+
+    const payload = {};
+    allowed.forEach((key) => {
+      if (data[key] !== undefined) {
+        payload[key] = data[key];
+      }
+    });
+
+    // Ensure hvac_room_ids is an array of integers
+    if (payload.hvac_room_ids !== undefined) {
+      if (Array.isArray(payload.hvac_room_ids)) {
+        payload.hvac_room_ids = payload.hvac_room_ids.map(id => parseInt(id, 10));
+      } else if (typeof payload.hvac_room_ids === 'string') {
+        payload.hvac_room_ids = payload.hvac_room_ids.split(',').map(id => parseInt(id.trim(), 10));
+      } else {
+        payload.hvac_room_ids = [parseInt(payload.hvac_room_ids, 10)];
+      }
+    }
+
+    const hvac_id = generateHvacId();
+
+    if (!hvac_id) {
+      return res.status(500).json({ error: "validation error" });
+    }
+
+    payload.created_by = "admin";
+    payload.created_at = new Date();
+
+    const newHVAC = await HVAC.create({
+      ...payload,
+      hvac_id
+    });
+
+    res.status(201).json({
+      message: "HVAC created successfully",
+      data: newHVAC
+    });
   } catch (err) {
-    console.error("Failed to insert hvac:", err.message);
-    res.status(500).json({ error: "Failed to create hvac" });
+    console.error("Failed to insert HVAC:", err.message);
+    res.status(500).json({ error: "Failed to create HVAC" });
   }
 };
 
-// PUT update hvac by ID
 exports.updateHVAC = async (req, res) => {
-  const id = req.params.id;
+  const { hvac_id } = req.params;
+
+  if (!hvac_id) {
+    return res.status(400).json({ error: "validation error" });
+  }
+
   const data = req.body;
+
   try {
     const [updated] = await HVAC.update(data, {
-      where: { hvac_id: id },
+      where: { hvac_id }
     });
+
     if (updated === 0) {
       return res.status(404).json({ message: "HVAC not found" });
     }
-    res.json({ message: "HVAC updated" });
+
+    const updatedHVAC = await HVAC.findOne({
+      where: { hvac_id }
+    });
+
+    res.json({
+      message: "HVAC updated successfully",
+      data: updatedHVAC
+    });
   } catch (err) {
     console.error("Failed to update hvac:", err.message);
     res.status(500).json({ error: "Failed to update hvac" });
@@ -85,46 +182,6 @@ exports.deleteHVAC = async (req, res) => {
 // POST control hvac status
 exports.controlHVAC = async (req, res) => {
 
-};
-
-const fetchHVACRealtimeData = async (Model, idField, timeField, req, res, hvacName) => {
-    const { startDate, endDate, limit } = req.query;
-    const identifierValue = req.params[idField];
-
-    try {
-        const whereCondition = {
-            [idField]: identifierValue,
-        };
-
-        if (startDate && endDate) {
-            whereCondition[timeField] = {
-                [Op.between]: [new Date(startDate), new Date(endDate)],
-            };
-        }
-
-        const options = {
-            where: whereCondition,
-            order: [[timeField, 'DESC']],
-            limit: limit ? parseInt(limit, 10) : undefined,
-        };
-
-        const data = await Model.findAll(options);
-        return res.json(data);
-    } catch (err) {
-        console.error(`Failed to fetch ${hvacName} data for ${idField} ${identifierValue}:`, err.message);
-        return res.status(500).json({ error: `Failed to retrieve ${hvacName} real-time data` });
-    }
-};
-
-exports.getMitsubishiElectricHVACRealtimeData = async (req, res) => {
-    return fetchHVACRealtimeData(
-        HVACData, 
-        'hvac_id', 
-        'timestamp', 
-        req, 
-        res, 
-        'Mitsubishi Electric HVAC',
-    );
 };
 
 module.exports = {

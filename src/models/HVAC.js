@@ -3,9 +3,8 @@ const sequelize = require('../config/database');
 
 const HVAC = sequelize.define('HVAC', {
     hvac_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+        type: DataTypes.STRING,
+        primaryKey: true
     },
     hvac_name: {
         type: DataTypes.STRING,
@@ -35,12 +34,11 @@ const HVAC = sequelize.define('HVAC', {
         type: DataTypes.STRING
     },
     hvac_property_id: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
+        type: DataTypes.STRING
+        },
     hvac_room_ids: {
         type: DataTypes.ARRAY(DataTypes.INTEGER),
-        defaultValue: []
+        // defaultValue: []
     },
     hvac_connectivity: {
         type: DataTypes.STRING
@@ -102,7 +100,16 @@ const HVAC = sequelize.define('HVAC', {
     },
     hvac_notes: {
         type: DataTypes.TEXT
-    }
+    },
+    created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+    },
+    created_by: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+    },
 }, {
     timestamps: false,
     tableName: 'HVACs'

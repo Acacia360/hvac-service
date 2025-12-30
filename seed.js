@@ -1,5 +1,14 @@
 const db = require("./src/models");
 
+const generateHvacId = () => {
+  const prefix = "HVAC";
+  const randomLetters = Array.from({ length: 3 }, () =>
+    String.fromCharCode(65 + Math.floor(Math.random() * 26))
+  ).join('');
+  const randomNum = Math.floor(1000 + Math.floor(Math.random() * 9000));
+  return `${prefix}${randomLetters}${randomNum}`;
+};
+
 const hvacs = [
     {
         hvac_name: "HVAC Unit 1",
@@ -11,9 +20,9 @@ const hvacs = [
         hvac_installation_date: "2021-03-01",
         hvac_installation_location: "Floor 5",
         hvac_property_id: "PROPHOT0001",
-        hvac_room_ids: [1,2,3,4,5,6],
+        hvac_room_ids: [2],
         hvac_connectivity: "Ethernet",
-        hvac_control_method: "",
+        hvac_control_method: "Central Controller",
         hvac_status: true,
         hvac_operation_mode: "Auto",
         hvac_temperature: 22.5,
@@ -23,14 +32,21 @@ const hvacs = [
         hvac_air_direction: "Auto",
         hvac_ventillation_mode: "Fresh Air",
         hvac_power_source: "Mains AC",
-        hvac_energy_consumption_data: {},
+        hvac_energy_consumption_data: {
+            daily_kwh: 12.5,
+            monthly_kwh: 350
+        },
         hvac_schedule_status: false,
         hvac_schedule_settings: {},
-        hvac_notification_settings: {},
-        hvac_maintenance_logs: "",
+        hvac_notification_settings: {
+            email: true,
+            sms: false
+        },
+        hvac_maintenance_logs: "Initial installation completed.",
         hvac_last_maintenance_date: "2024-03-10",
         hvac_warranty_expiration: "2026-03-01",
-        hvac_notes: "Main unit for public areas. High priority maintenance."
+        hvac_notes: "Main unit for public areas. High priority maintenance.",
+        created_by: "system"
     },
     {
         hvac_name: "HVAC Unit 2",
@@ -42,9 +58,9 @@ const hvacs = [
         hvac_installation_date: "2023-01-15",
         hvac_installation_location: "Plant Room",
         hvac_property_id: "PROPHOT0001",
-        hvac_room_ids: [1,2,3,4,5,6],
+        hvac_room_ids: [1, 3],
         hvac_connectivity: "Wi-Fi",
-        hvac_control_method: "",
+        hvac_control_method: "Remote",
         hvac_status: true,
         hvac_operation_mode: "Cooling",
         hvac_temperature: 20.0,
@@ -54,16 +70,25 @@ const hvacs = [
         hvac_air_direction: "Swing",
         hvac_ventillation_mode: "Recirculation",
         hvac_power_source: "Mains AC",
-        hvac_energy_consumption_data: {},
+        hvac_energy_consumption_data: {
+            daily_kwh: 8.2,
+            monthly_kwh: 240
+        },
         hvac_schedule_status: false,
         hvac_schedule_settings: {},
         hvac_notification_settings: {},
-        hvac_maintenance_logs: "",
+        hvac_maintenance_logs: "Routine check completed.",
         hvac_last_maintenance_date: "2023-01-15",
         hvac_warranty_expiration: "2028-01-15",
-        hvac_notes: "Standard unit."
+        hvac_notes: "Standard unit.",
+        created_at: new Date()
     }
 ];
+
+// Add hvac_id to each hvac
+hvacs.forEach(hvac => {
+    hvac.hvac_id = generateHvacId();
+});
 
 async function seedDatabase() {
     try {
