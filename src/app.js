@@ -5,6 +5,8 @@ const hvacRoutes = require("./routes/hvac");
 const logRoutes = require('./routes/logRoutes');
 const hvacDataRoutes = require("./routes/hvacData");
 
+const { startHVACDataLoggerCron } = require("./cron/HVACDataLogger.cron");
+
 const { standardAPILogger, errorAPILogger } = require("./middlewares/apiLogger");
 
 require("dotenv").config();
@@ -33,6 +35,7 @@ db.sequelize
     console.log("Database & tables synced successfully!");
     app.listen(PORT, () => {
       console.log(`HVAC service listening on port ${PORT}`);
+      startHVACDataLoggerCron();
     });
   })
   .catch((err) => {

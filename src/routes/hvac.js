@@ -7,6 +7,6 @@ router.get('/:id', hvacController.getHVACById);
 router.post('/', hvacController.createHVAC);
 router.put('/:id', hvacController.updateHVAC);
 router.delete('/:id', hvacController.deleteHVAC);
-router.post("/:hvac_id/control", hvacController.controlHVAC);
+router.post("/:id/control", hvacController.controlHVAC);
 
 module.exports = router;

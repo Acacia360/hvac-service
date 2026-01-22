@@ -2,9 +2,14 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const HVAC = sequelize.define('HVAC', {
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     hvac_id: {
         type: DataTypes.STRING,
-        primaryKey: true
+        allowNull: false
     },
     hvac_name: {
         type: DataTypes.STRING,
@@ -22,7 +27,7 @@ const HVAC = sequelize.define('HVAC', {
     },
     hvac_serial_number: {
         type: DataTypes.STRING,
-        unique: true
+        unique: false
     },
     hvac_manufacture_date: {
         type: DataTypes.STRING
@@ -36,9 +41,9 @@ const HVAC = sequelize.define('HVAC', {
     hvac_property_id: {
         type: DataTypes.STRING
         },
-    hvac_room_ids: {
-        type: DataTypes.ARRAY(DataTypes.INTEGER),
-        // defaultValue: []
+    hvac_room_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
     hvac_connectivity: {
         type: DataTypes.STRING
@@ -101,6 +106,15 @@ const HVAC = sequelize.define('HVAC', {
     hvac_notes: {
         type: DataTypes.TEXT
     },
+    hvac_bacnet_ip: {
+        type: DataTypes.STRING
+    },
+    hvac_bacnet_device_id: {
+        type: DataTypes.INTEGER
+    },
+    hvac_bacnet_unit_number: {
+        type: DataTypes.INTEGER
+    },
     created_at: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -112,7 +126,8 @@ const HVAC = sequelize.define('HVAC', {
     },
 }, {
     timestamps: false,
-    tableName: 'HVACs'
+    tableName: 'HVACs',
+    indexes: [{ fields: ['hvac_id'] }, { fields: ['hvac_room_id'] }, { unique: true, fields: ['hvac_id', 'hvac_room_id'] }]
 });
 
 module.exports = HVAC;

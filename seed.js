@@ -20,7 +20,7 @@ const hvacs = [
         hvac_installation_date: "2021-03-01",
         hvac_installation_location: "Floor 5",
         hvac_property_id: "PROPHOT0001",
-        hvac_room_ids: [2],
+        hvac_room_ids: [1, 2, 3],
         hvac_connectivity: "Ethernet",
         hvac_control_method: "Central Controller",
         hvac_status: true,
@@ -46,6 +46,10 @@ const hvacs = [
         hvac_last_maintenance_date: "2024-03-10",
         hvac_warranty_expiration: "2026-03-01",
         hvac_notes: "Main unit for public areas. High priority maintenance.",
+        hvac_bacnet_ip: "192.168.1.174",
+        hvac_bacnet_device_id: 12345,
+        hvac_bacnet_unit_number: 1,
+        created_at: new Date(),
         created_by: "system"
     },
     {
@@ -58,7 +62,7 @@ const hvacs = [
         hvac_installation_date: "2023-01-15",
         hvac_installation_location: "Plant Room",
         hvac_property_id: "PROPHOT0001",
-        hvac_room_ids: [1, 3],
+        hvac_room_ids: [4, 5],
         hvac_connectivity: "Wi-Fi",
         hvac_control_method: "Remote",
         hvac_status: true,
@@ -81,7 +85,10 @@ const hvacs = [
         hvac_last_maintenance_date: "2023-01-15",
         hvac_warranty_expiration: "2028-01-15",
         hvac_notes: "Standard unit.",
-        created_at: new Date()
+        hvac_bacnet_ip: "192.168.1.174",
+        hvac_bacnet_device_id: 12345,
+        hvac_bacnet_unit_number: 1,
+        created_at: new Date(),
     }
 ];
 
@@ -91,22 +98,32 @@ hvacs.forEach(hvac => {
 });
 
 async function seedDatabase() {
-    try {
-        await db.sequelize.sync({ alter: true }); 
-        console.log("Database synchronized.");
-        
-        const hvacCount = await db.HVAC.count();
-        if (hvacCount === 0) {
-            await db.HVAC.bulkCreate(hvacs);
-            console.log("HVAC data seeded successfully!");
-        } else {
-            console.log("HVAC table is not empty. Skipping seeding.");
-        }
-    } catch (error) {
-        console.error("Error seeding the database:", error);
-    } finally {
-        await db.sequelize.close(); 
+  try {
+    await db.sequelize.sync({ alter: true });
+    const hvacCount = await db.HVAC.count();
+
+    if (hvacCount === 0) {
+      const flatHvacRecords = [];
+      hvacs.forEach((template) => {
+          const sharedHvacId = generateHvacId();
+          template.hvac_room_ids.forEach((roomId) => {
+              const { hvac_room_ids, ...rest } = template;
+              flatHvacRecords.push({
+                  ...rest,
+                  hvac_id: sharedHvacId,
+                  hvac_room_id: roomId,
+                  created_at: new Date()
+              });
+          });
+      });
+      await db.HVAC.bulkCreate(flatHvacRecords);
+      console.log(`Seeded ${flatHvacRecords.length} room-level HVAC records.`);
     }
+  } catch (error) {
+    console.error("Error seeding:", error);
+  } finally {
+    await db.sequelize.close();
+  }
 }
 
 seedDatabase();
