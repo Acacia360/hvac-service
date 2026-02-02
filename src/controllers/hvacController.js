@@ -2,13 +2,11 @@ const { HVAC } = require("../models");
 const bacnet = require("../services/bacnetService");
 const map = require("../services/mitsubishiAE200Map");
 
-const generateHvacId = () => {
+const generateHvacId = (name) => {
   const prefix = "HVAC";
-  const randomLetters = Array.from({ length: 3 }, () =>
-    String.fromCharCode(65 + Math.floor(Math.random() * 26)),
-  ).join("");
+  const letters = name.replace(/\s+/g, '').substring(0, 3).toUpperCase();
   const randomNum = Math.floor(1000 + Math.random() * 9000);
-  return `${prefix}${randomLetters}${randomNum}`;
+  return `${prefix}${letters}${randomNum}`;
 };
 
 const syncHvacData = async (hvac) => {
@@ -146,7 +144,7 @@ exports.createHVAC = async (req, res) => {
       }
     }
 
-    const hvac_id = generateHvacId();
+    const hvac_id = generateHvacId(payload.hvac_name);
 
     if (!hvac_id) {
       return res.status(500).json({ error: "validation error" });
