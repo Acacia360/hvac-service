@@ -25,6 +25,8 @@ app.get("/health", (req, res) => res.status(200).send("OK"));
 
 app.use(errorAPILogger);
 
+module.exports = app;
+
 const PORT = process.env.PORT || 3029;
 
 db.sequelize

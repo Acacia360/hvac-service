@@ -131,9 +131,9 @@ exports.createHVAC = async (req, res) => {
 };
 
 exports.updateHVAC = async (req, res) => {
-  const { hvac_id } = req.params;
+  const { id } = req.params;
 
-  if (!hvac_id) {
+  if (!id) {
     return res.status(400).json({ error: "validation error" });
   }
 
@@ -141,7 +141,7 @@ exports.updateHVAC = async (req, res) => {
 
   try {
     const [updated] = await HVAC.update(data, {
-      where: { hvac_id }
+      where: { hvac_id: id }
     });
 
     if (updated === 0) {
@@ -149,7 +149,7 @@ exports.updateHVAC = async (req, res) => {
     }
 
     const updatedHVAC = await HVAC.findOne({
-      where: { hvac_id }
+      where: { hvac_id: id }
     });
 
     res.json({
