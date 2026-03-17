@@ -13,10 +13,12 @@ const db = {
 };
 
 HVAC.hasMany(HVACData, {
-  foreignKey: 'hvac_id',
+  foreignKey: 'hvac_instance_id',
+  sourceKey: 'id'
 });
 HVACData.belongsTo(HVAC, {
-  foreignKey: 'hvac_id',
+  foreignKey: 'hvac_instance_id',
+  targetKey: 'id'
 });
 
 module.exports = db;
