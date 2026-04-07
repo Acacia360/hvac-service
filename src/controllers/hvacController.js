@@ -101,6 +101,7 @@ exports.createHVAC = async (req, res) => {
       "hvac_installation_date",
       "hvac_installation_location",
       "hvac_property_id",
+      "hvac_room_id",
       "hvac_room_ids",
       "hvac_connectivity",
       "hvac_control_method",
@@ -131,17 +132,18 @@ exports.createHVAC = async (req, res) => {
     });
 
     if (payload.hvac_room_ids !== undefined) {
+      let parsedRoomIds;
       if (Array.isArray(payload.hvac_room_ids)) {
-        payload.hvac_room_ids = payload.hvac_room_ids.map((id) =>
-          parseInt(id, 10),
-        );
+        parsedRoomIds = payload.hvac_room_ids.map((id) => parseInt(id, 10));
       } else if (typeof payload.hvac_room_ids === "string") {
-        payload.hvac_room_ids = payload.hvac_room_ids
+        parsedRoomIds = payload.hvac_room_ids
           .split(",")
           .map((id) => parseInt(id.trim(), 10));
       } else {
-        payload.hvac_room_ids = [parseInt(payload.hvac_room_ids, 10)];
+        parsedRoomIds = [parseInt(payload.hvac_room_ids, 10)];
       }
+      payload.hvac_room_id = parsedRoomIds[0] || null;
+      delete payload.hvac_room_ids;
     }
 
     const hvac_id = generateHvacId(payload.hvac_name);

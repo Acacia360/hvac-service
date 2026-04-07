@@ -43,7 +43,8 @@ const HVAC = sequelize.define('HVAC', {
         },
     hvac_room_id: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: true,
+        defaultValue: null
     },
     hvac_connectivity: {
         type: DataTypes.STRING
