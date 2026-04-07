@@ -43,7 +43,7 @@ describe('HVAC API Endpoints (/api/hvac)', () => {
     const res = await request(app).get('/api/hvac');
     
     expect(res.status).toBe(200);
-    expect(res.body.message).toBe("HVACs retrieved successfully");
+    expect(res.body.message).toBe("HVACs retrieved and synced successfully");
     expect(res.body.data.length).toBeGreaterThan(0);
     expect(res.body.data[0].hvac_id).toBe(createdHvacId);
   });

@@ -10,10 +10,6 @@ const HVACData = sequelize.define('HVACData', {
   hvac_instance_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: 'HVACs',
-      key: 'id',
-    },
   },
   timestamp: {
     type: DataTypes.DATE,

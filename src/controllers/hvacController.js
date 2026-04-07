@@ -69,9 +69,9 @@ exports.getAllHVACs = async (req, res) => {
 
 // GET hvac by ID - Syncs specific unit
 exports.getHVACById = async (req, res) => {
-  const id = req.params.id;
+  const hvac_id = req.params.hvac_id;
   try {
-    const hvac = await HVAC.findByPk(id);
+    const hvac = await HVAC.findOne({ where: { hvac_id } });
     if (!hvac) return res.status(404).json({ message: "HVAC not found" });
 
     const liveData = await syncHvacData(hvac);
@@ -170,17 +170,17 @@ exports.createHVAC = async (req, res) => {
 
 // UPDATE hvac
 exports.updateHVAC = async (req, res) => {
-  const { id } = req.params;
+  const { hvac_id } = req.params;
 
   try {
     const [updated] = await HVAC.update(req.body, {
-      where: { id },
+      where: { hvac_id },
     });
 
     if (updated === 0)
       return res.status(404).json({ message: "Record not found" });
 
-    const updatedHVAC = await HVAC.findByPk(id);
+    const updatedHVAC = await HVAC.findOne({ where: { hvac_id } });
     res.json({ message: "HVAC updated successfully", data: updatedHVAC });
   } catch (err) {
     res.status(500).json({ error: "Failed to update hvac" });
@@ -189,10 +189,10 @@ exports.updateHVAC = async (req, res) => {
 
 // DELETE hvac by ID
 exports.deleteHVAC = async (req, res) => {
-  const id = req.params.id;
+  const hvac_id = req.params.hvac_id;
   try {
     const deleted = await HVAC.destroy({
-      where: { hvac_id: id },
+      where: { hvac_id },
     });
     if (deleted === 0) {
       return res.status(404).json({ message: "HVAC not found" });
@@ -226,11 +226,11 @@ exports.getHVACRoomControl = async (req, res) => {
 
 // POST control hvac status for a SPECIFIC room record
 exports.controlHVAC = async (req, res) => {
-  const { id } = req.params;
+  const { hvac_id } = req.params;
   const { power, mode, temperature, fanSpeed, airDirection } = req.body || {};
 
   try {
-    const hvac = await HVAC.findByPk(id);
+    const hvac = await HVAC.findOne({ where: { hvac_id } });
     if (!hvac) return res.status(404).json({ error: "HVAC record not found" });
 
     const ip = hvac.hvac_bacnet_ip;
