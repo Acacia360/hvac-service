@@ -2,9 +2,19 @@ name: HVAC CI
 
 on:
   push:
-    branches: [ "main", develop ]
+    branches: [ "main", "develop" ]
   pull_request:
     branches: [ "main", "develop" ]
+
+# ---------------------------------------------------------
+# REQUIRED: Grants GitHub Actions permission to draw the UI
+# ---------------------------------------------------------
+permissions:
+  contents: read
+  issues: read
+  checks: write
+  pull-requests: write
+# ---------------------------------------------------------
 
 jobs:
   build-and-test:
@@ -38,7 +48,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Tests
+      - name: Run Tests with Coverage and Reporting
         env:
           NODE_ENV: test
           DB_HOST: localhost
@@ -46,5 +56,17 @@ jobs:
           DB_USER: test_user 
           DB_PASSWORD: posgres
           DB_NAME: hvac_db
-          JWT_SECRET: \${{ secrets.JWT_SECRET }}
-        run: npm test
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          # Tells jest-junit exactly where to put the XML file
+          JEST_JUNIT_OUTPUT_DIR: ./reports
+          JEST_JUNIT_OUTPUT_NAME: test-report.xml
+        # Runs the coverage script AND generates the XML file for the UI
+        run: npm run test:coverage -- --ci --reporters=default --reporters=jest-junit
+
+      # 👇 THIS CREATES THE EXACT UI YOU SHOWED IN YOUR SCREENSHOT 👇
+      - name: Publish Test Report
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always() # Runs even if tests fail so you can see what broke
+        with:
+          name: Jest Test Results
+          files: "reports/test-report.xml"
