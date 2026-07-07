@@ -1,0 +1,90 @@
+{
+  "info": {
+    "name": "AE-200E API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3099/api" },
+    { "key": "ip", "value": "10.0.1.50" },
+    { "key": "group", "value": "1" },
+    { "key": "hvacId", "value": "HVAC0001" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+    },
+    {
+      "name": "List Devices",
+      "request": { "method": "GET", "url": "{{baseUrl}}/devices" }
+    },
+    {
+      "name": "Device Groups",
+      "request": { "method": "GET", "url": "{{baseUrl}}/devices/{{ip}}/groups" }
+    },
+    {
+      "name": "Device Units (cached)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/devices/{{ip}}/units" }
+    },
+    {
+      "name": "Single Unit (live)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/devices/{{ip}}/units/{{group}}" }
+    },
+    {
+      "name": "Control Single Unit",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/devices/{{ip}}/units/{{group}}/control",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"drive\": \"ON\",\n  \"mode\": \"COOL\",\n  \"setTemp\": 24,\n  \"fanSpeed\": \"AUTO\",\n  \"airDirection\": \"HORIZONTAL\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Control All Units On Device",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/devices/{{ip}}/units/all/control",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"drive\": \"OFF\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Master Control (all devices)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/units/all/control",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"drive\": \"OFF\"\n}"
+        }
+      }
+    },
+    {
+      "name": "HVAC Rooms By Controller (DB)",
+      "request": { "method": "GET", "url": "{{baseUrl}}/hvac/{{ip}}" }
+    },
+    {
+      "name": "HVAC Sync From Device",
+      "request": { "method": "GET", "url": "{{baseUrl}}/hvac/{{ip}}/sync" }
+    },
+    {
+      "name": "HVAC Control Room",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/hvac/{{hvacId}}/control",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"drive\": \"ON\",\n  \"mode\": \"HEAT\",\n  \"setTemp\": 22,\n  \"fanSpeed\": \"HIGH\",\n  \"airDirection\": \"VERTICAL\"\n}"
+        }
+      }
+    }
+  ]
+}
