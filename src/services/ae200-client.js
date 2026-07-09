@@ -98,6 +98,8 @@ class AE200Client {
         this.systemInfo    = null;
         this._reconnectTimer = null;
         this._pollTimer      = null;
+        this._polling        = false;      // guards against overlapping _pollAllUnits runs
+        this._sendQueue      = Promise.resolve(); // serializes _send calls — protocol has no per-request correlation ID
         this.onStateUpdate   = null;       // callback: (states) => {}
     }
 
@@ -204,7 +206,15 @@ class AE200Client {
         }
     }
 
+    /** Queues the actual send so only one request is ever outstanding on the connection at a time. */
     _send(xml, waitFor, timeoutMs = 10000) {
+        const run = () => this._sendNow(xml, waitFor, timeoutMs);
+        const result = this._sendQueue.then(run, run);
+        this._sendQueue = result.then(() => {}, () => {});
+        return result;
+    }
+
+    _sendNow(xml, waitFor, timeoutMs = 10000) {
         return new Promise((resolve, reject) => {
             if (!this.ws || this.ws.readyState !== WebSocket.OPEN)
                 return reject(new Error('Not connected'));
@@ -242,12 +252,21 @@ class AE200Client {
 
     /** Read all groups and cache results */
     async _pollAllUnits() {
-        for (const g of this.groups) {
-            try {
-                await this.readGroup(g.group);
-            } catch (_) {}
+        if (this._polling) {
+            console.warn(`[${this.ip}] Skipping poll — previous cycle still in progress`);
+            return this.lastStates;
         }
-        if (this.onStateUpdate) this.onStateUpdate(this.lastStates);
+        this._polling = true;
+        try {
+            for (const g of this.groups) {
+                try {
+                    await this.readGroup(g.group);
+                } catch (_) {}
+            }
+            if (this.onStateUpdate) this.onStateUpdate(this.lastStates);
+        } finally {
+            this._polling = false;
+        }
         return this.lastStates;
     }
 

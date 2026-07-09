@@ -5,6 +5,7 @@
 
 const { AE200Client } = require('./ae200-client');
 const HVAC = require('../models/HVAC');
+const { syncStatesToDb } = require('./hvacSync.service');
 
 const AE200_USER    = process.env.AE200_USER     || 'administrator';
 const AE200_PASS    = process.env.AE200_PASS     || 'admin';
@@ -38,8 +39,12 @@ async function getOrCreateClient(ip) {
 
     await client.connect();
     client.startPolling(POLL_INTERVAL);
-    client.onStateUpdate = (states) =>
+    client.onStateUpdate = (states) => {
         console.log(`[${ip}] State refreshed — ${Object.keys(states).length} units`);
+        syncStatesToDb(ip, states).catch(err =>
+            console.error(`[${ip}] Failed to sync polled states to DB:`, err.message)
+        );
+    };
 
     console.log(`[${ip}] ✅ Connected and ready`);
     return client;
