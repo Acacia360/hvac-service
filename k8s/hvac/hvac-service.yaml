@@ -1,0 +1,13 @@
+# HVAC Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: hvac-service
+spec:
+  selector:
+    app: hvac-service
+  ports:
+    - protocol: TCP
+      port: 3029
+      targetPort: 3029
+  type: ClusterIP

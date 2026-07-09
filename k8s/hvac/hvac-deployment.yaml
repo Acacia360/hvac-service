@@ -1,0 +1,68 @@
+# HVAC Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hvac-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: hvac-service
+  template:
+    metadata:
+      labels:
+        app: hvac-service
+    spec:
+      containers:
+        - name: hvac-service
+          image: acaciagreentechnologies/hvac-service:1.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3029
+
+          envFrom:
+            - configMapRef:
+                name: hvac-config
+            - secretRef:
+                name: hvac-secret
+
+          env:
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: hvac-secret
+                key: DB_USER
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: hvac-secret
+                key: DB_PASSWORD
+          - name: JWT_SECRET
+            valueFrom:
+              secretKeyRef:
+                name: hvac-secret
+                key: JWT_SECRET
+
+          # ----- Health Checks -----
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3029
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3029
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+          # ----- Resource Control -----
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
