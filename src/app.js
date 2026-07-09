@@ -23,6 +23,7 @@
 const express = require('express');
 const cors    = require('cors');
 const routes  = require('./routes');
+const logRoutes = require('./routes/logRoutes');
 const sequelize = require('./config/database');
 require('./models/HVAC');
 const { getOrCreateClient, getKnownControllerIps, disconnectAll } = require('./services/deviceRegistry.service');
@@ -34,14 +35,14 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', routes);
-
+app.use('/api/hvacLogs', logRoutes);
+app.get("/health", (req, res) => res.status(200).send("OK"));
 /** 404 */
 app.use((req, res) => {
     res.status(404).json({
         success: false,
         error: 'Endpoint not found',
         routes: [
-            'GET  /api/health',
             'GET  /api/devices',
             'GET  /api/devices/:ip/groups',
             'GET  /api/devices/:ip/units',
