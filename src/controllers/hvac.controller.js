@@ -2,10 +2,20 @@ const { ok, fail } = require('../utils/response');
 const HVAC = require('../models/HVAC');
 const { getOrCreateClient } = require('../services/deviceRegistry.service');
 const { syncStatesToDb, stateToHvacFields } = require('../services/hvacSync.service');
+const { recordAction } = require('../services/hvacHistory.service');
 
-/** GET /api/hvac/:ip — all HVAC rooms/details for one controller */
+/** GET /api/hvac/:ip — live-refreshes every group on the controller, persists it, then returns HVAC rooms for it */
 async function getRoomsByController(req, res) {
     const ip = req.params.ip;
+
+    try {
+        const client = await getOrCreateClient(ip);
+        await client.refreshAll();
+        await syncStatesToDb(ip, client.getCachedStates());
+    } catch (err) {
+        console.error(`[${ip}] Live refresh failed, serving last known DB state:`, err.message);
+    }
+
     const rooms = await HVAC.findAll({ where: { hvac_controller_ip: ip }, order: [['hvac_group_id', 'ASC']] });
     if (rooms.length === 0) return fail(res, `No HVAC rooms found for controller ${ip}`, 404);
     ok(res, { ip, count: rooms.length, rooms });
@@ -39,6 +49,7 @@ async function controlRoom(req, res) {
     const state  = await client.controlGroup(room.hvac_group_id, req.body);
 
     await room.update(stateToHvacFields(state));
+    await recordAction(room, state);
 
     ok(res, { message: `Room ${room.hvac_id} updated`, room });
 }

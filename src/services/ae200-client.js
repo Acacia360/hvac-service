@@ -193,8 +193,8 @@ class AE200Client {
 
     _onMessage(xml) {
         if (xml.includes('<Command>notifyRequest</Command>')) {
-            // Server push — refresh states
-            this._pollAllUnits().catch(() => {});
+            // Server push — refresh states (disabled: was firing continuously, flooding HVACs updates)
+            // this._pollAllUnits().catch(() => {});
             return;
         }
         for (const [key, cb] of this.callbacks.entries()) {
@@ -293,6 +293,9 @@ class AE200Client {
     stopPolling() {
         if (this._pollTimer) { clearInterval(this._pollTimer); this._pollTimer = null; }
     }
+
+    /** Force a live read of every group, on demand (no timer, no device push involved) */
+    refreshAll() { return this._pollAllUnits(); }
 
     /** Get cached states (instant, no WS call) */
     getCachedStates() { return this.lastStates; }

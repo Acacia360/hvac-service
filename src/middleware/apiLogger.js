@@ -40,14 +40,12 @@ function standardAPILogger() {
 async function errorAPILogger(err, req, res, next) {
     console.log("Error occurred::: error", err);
     if (!res.headersSent) {
-        if (!res.statusCode || res.statusCode < 400) {
-            res.statusCode = 500;
-        }
+        const statusCode = err.statusCode || (res.statusCode >= 400 ? res.statusCode : 500);
         try {
             await APILogs.create({
                 method: req.method,
                 endpoint: req.originalUrl,
-                status_code: res.statusCode,
+                status_code: statusCode,
                 triggered_by_email: req.user?.user_email || "anonymous",
                 triggered_by_role: req.user?.user_role || "guest",
                 message: err.message || "Unknown error",
@@ -56,7 +54,7 @@ async function errorAPILogger(err, req, res, next) {
         } catch (e) {
             console.error("Failed to save error log:", e);
         }
-        res.status(res.statusCode).json({ message: err.message });
+        res.status(statusCode).json({ message: err.message });
     } else {
         console.warn("Response already sent, skipping duplicate error log.");
         next(err);

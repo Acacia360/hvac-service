@@ -27,12 +27,14 @@ const logRoutes = require('./routes/logRoutes');
 const sequelize = require('./config/database');
 require('./models/HVAC');
 const { getOrCreateClient, getKnownControllerIps, disconnectAll } = require('./services/deviceRegistry.service');
+const { standardAPILogger, errorAPILogger } = require('./middleware/apiLogger');
 
 const API_PORT = process.env.PORT || 3099;
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(standardAPILogger());
 
 app.use('/api', routes);
 app.use('/api/hvacLogs', logRoutes);
@@ -56,10 +58,11 @@ app.use((req, res) => {
         ]
     });
 });
+app.use(errorAPILogger);
 
 async function start() {
     console.log('[DB] Syncing database schema...');
-    await sequelize.sync();
+    await sequelize.sync({alter:true});
     console.log('[DB] ✅ Schema synced');
 
     const startupIps = await getKnownControllerIps();

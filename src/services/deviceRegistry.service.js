@@ -5,7 +5,8 @@
 
 const { AE200Client } = require('./ae200-client');
 const HVAC = require('../models/HVAC');
-const { syncStatesToDb } = require('./hvacSync.service');
+const { syncStatesToDb, stateToHvacFields } = require('./hvacSync.service');
+const { recordAction } = require('./hvacHistory.service');
 
 const AE200_USER    = process.env.AE200_USER     || 'administrator';
 const AE200_PASS    = process.env.AE200_PASS     || 'admin';
@@ -38,7 +39,7 @@ async function getOrCreateClient(ip) {
     clients[ip] = client;
 
     await client.connect();
-    client.startPolling(POLL_INTERVAL);
+    // client.startPolling(POLL_INTERVAL);
     client.onStateUpdate = (states) => {
         console.log(`[${ip}] State refreshed — ${Object.keys(states).length} units`);
         syncStatesToDb(ip, states).catch(err =>
@@ -59,6 +60,15 @@ async function controlAll(client, params) {
     for (const g of client.getGroups()) {
         try {
             const state = await client.controlGroup(g.group, params);
+
+            const hvacRow = await HVAC.findOne({
+                where: { hvac_controller_ip: client.ip, hvac_group_id: Number(g.group) },
+            });
+            if (hvacRow) {
+                await hvacRow.update(stateToHvacFields(state));
+                await recordAction(hvacRow, state);
+            }
+
             results.push({ group: g.group, name: g.name, success: true, unit: state });
         } catch (err) {
             results.push({ group: g.group, name: g.name, success: false, error: err.message });
