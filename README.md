@@ -504,7 +504,11 @@ SELECT * FROM "HVACs" LIMIT 1;
 
 # 4. Restart service
 npm start
+<<<<<<< HEAD
 ```
 
 
 
+=======
+```
+>>>>>>> main

@@ -13,11 +13,19 @@ const db = {
 };
 
 HVAC.hasMany(HVACData, {
+<<<<<<< HEAD
   foreignKey: 'hvac_instance_id',
   sourceKey: 'id'
 });
 HVACData.belongsTo(HVAC, {
   foreignKey: 'hvac_instance_id',
+=======
+  foreignKey: 'hvac_id',
+  sourceKey: 'id'
+});
+HVACData.belongsTo(HVAC, {
+  foreignKey: 'hvac_id',
+>>>>>>> main
   targetKey: 'id'
 });
 
