@@ -2,29 +2,6 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const HVACData = sequelize.define('HVACData', {
-<<<<<<< HEAD
-  data_id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true,
-  },
-  hvac_instance_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  timestamp: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
-    allowNull: false,
-  },
-  status: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-  },
-}, {
-  timestamps: false,
-  tableName: 'HVAC_Data',
-=======
     hvac_data_id: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
@@ -74,7 +51,6 @@ const HVACData = sequelize.define('HVACData', {
 }, {
     timestamps: false,
     tableName: 'HVAC_Data',
->>>>>>> main
 });
 
 module.exports = HVACData;

@@ -46,14 +46,11 @@ const HVAC = sequelize.define('HVAC', {
         allowNull: true,
         defaultValue: null
     },
-<<<<<<< HEAD
-=======
     hvac_group_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         defaultValue: null
     },
->>>>>>> main
     hvac_connectivity: {
         type: DataTypes.STRING
     },
@@ -61,13 +58,8 @@ const HVAC = sequelize.define('HVAC', {
         type: DataTypes.STRING
     },
     hvac_status: {
-<<<<<<< HEAD
-        type: DataTypes.BOOLEAN,
-        defaultValue: false,
-=======
         type: DataTypes.STRING,
         defaultValue: 'OFF',
->>>>>>> main
         allowNull: false
     },
     hvac_operation_mode: {
@@ -76,22 +68,6 @@ const HVAC = sequelize.define('HVAC', {
     hvac_temperature: {
         type: DataTypes.FLOAT
     },
-<<<<<<< HEAD
-    hvac_fan_status: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-    },
-    hvac_fan_speed: {
-        type: DataTypes.STRING
-    },
-    hvac_lossnay_fan_speed: {
-        type: DataTypes.STRING
-    },
-    hvac_air_direction: {
-        type: DataTypes.STRING
-    },
-    hvac_ventillation_mode: {
-=======
    
     hvac_fan_speed: {
         type: DataTypes.STRING
@@ -101,26 +77,12 @@ const HVAC = sequelize.define('HVAC', {
         type: DataTypes.STRING
     },
     hvac_inlet_temperature: {
->>>>>>> main
         type: DataTypes.STRING
     },
     hvac_power_source: {
         type: DataTypes.STRING
     },
-<<<<<<< HEAD
-    hvac_energy_consumption_data: {
-        type: DataTypes.JSON
-    },
-    hvac_schedule_status: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-    },
-    hvac_schedule_settings: {
-        type: DataTypes.JSON
-    },
-=======
       
->>>>>>> main
     hvac_notification_settings: {
         type: DataTypes.JSON
     },
@@ -136,16 +98,6 @@ const HVAC = sequelize.define('HVAC', {
     hvac_notes: {
         type: DataTypes.TEXT
     },
-<<<<<<< HEAD
-    hvac_bacnet_ip: {
-        type: DataTypes.STRING
-    },
-    hvac_bacnet_device_id: {
-        type: DataTypes.INTEGER
-    },
-    hvac_bacnet_unit_number: {
-        type: DataTypes.INTEGER
-=======
     hvac_controller_ip: {
         type: DataTypes.STRING
     },
@@ -153,7 +105,6 @@ const HVAC = sequelize.define('HVAC', {
         type: DataTypes.DATE,
         allowNull: false,
         defaultValue: DataTypes.NOW,
->>>>>>> main
     },
     created_at: {
         type: DataTypes.DATE,
