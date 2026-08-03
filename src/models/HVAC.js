@@ -40,7 +40,7 @@ const HVAC = sequelize.define('HVAC', {
     },
     hvac_property_id: {
         type: DataTypes.STRING
-        },
+    },
     hvac_room_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
@@ -68,11 +68,9 @@ const HVAC = sequelize.define('HVAC', {
     hvac_temperature: {
         type: DataTypes.FLOAT
     },
-   
     hvac_fan_speed: {
         type: DataTypes.STRING
     },
-    
     hvac_air_direction: {
         type: DataTypes.STRING
     },
@@ -82,7 +80,6 @@ const HVAC = sequelize.define('HVAC', {
     hvac_power_source: {
         type: DataTypes.STRING
     },
-      
     hvac_notification_settings: {
         type: DataTypes.JSON
     },
@@ -101,6 +98,35 @@ const HVAC = sequelize.define('HVAC', {
     hvac_controller_ip: {
         type: DataTypes.STRING
     },
+    // --- ADDED MISSING FIELDS ---
+    hvac_fan_status: {
+        type: DataTypes.STRING
+    },
+    hvac_lossnay_fan_speed: {
+        type: DataTypes.STRING
+    },
+    hvac_ventillation_mode: {
+        type: DataTypes.STRING
+    },
+    hvac_energy_consumption_data: {
+        type: DataTypes.STRING
+    },
+    hvac_schedule_status: {
+        type: DataTypes.STRING
+    },
+    hvac_schedule_settings: {
+        type: DataTypes.JSON
+    },
+    hvac_bacnet_ip: {
+        type: DataTypes.STRING
+    },
+    hvac_bacnet_device_id: {
+        type: DataTypes.STRING
+    },
+    hvac_bacnet_unit_number: {
+        type: DataTypes.INTEGER
+    },
+    // -----------------------------
     update_at:{
         type: DataTypes.DATE,
         allowNull: false,
