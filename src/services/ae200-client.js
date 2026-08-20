@@ -74,6 +74,12 @@ function buildControlXml(group, params) {
     return xmlWrap('setRequest', `<Mnet ${attr} />\r\n`);
 }
 
+/** AE-200E reports "Auto", "AutoCool", "AutoHeat", etc. for auto mode — collapse them all to "Auto". */
+function normalizeMode(mode) {
+    if (!mode) return mode;
+    return mode.slice(0, 4).toLowerCase() === 'auto' ? 'AUTO' : mode;
+}
+
 function buildGroupListXml() {
     return xmlWrap('getRequest', `<ControlGroup>\r\n<MnetList />\r\n</ControlGroup>\r\n`);
 }
@@ -313,7 +319,7 @@ class AE200Client {
             group:        String(groupId),
             name:         g?.name || String(groupId),
             drive:        xml.match(/Drive="([^"]+)"/)?.[1]        || null,
-            mode:         xml.match(/Mode="([^"]+)"/)?.[1]         || null,
+            mode:         normalizeMode(xml.match(/Mode="([^"]+)"/)?.[1]) || null,
             setTemp:      xml.match(/SetTemp="([^"]+)"/)?.[1]      || null,
             fanSpeed:     xml.match(/FanSpeed="([^"]+)"/)?.[1]     || null,
             airDirection: xml.match(/AirDirection="([^"]+)"/)?.[1] || null,
