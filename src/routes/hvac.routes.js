@@ -10,7 +10,7 @@ const router = express.Router();
 
 router.get('/hvac/:ip', asyncRoute(getRoomsByController));
 router.get('/hvac/:ip/sync', resolveDevice, asyncRoute(syncRoomsFromDevice));
-router.post('/hvac/:hvacId/control', authenticate,resolveHvacRoom, validateControlBody, asyncRoute(controlRoom));
+router.post('/hvac/:hvacId/control',resolveHvacRoom, validateControlBody, asyncRoute(controlRoom));
 
 module.exports = router;
  
