@@ -7,6 +7,7 @@ const { AE200Client } = require('./ae200-client');
 const HVAC = require('../models/HVAC');
 const { syncStatesToDb, stateToHvacFields } = require('./hvacSync.service');
 const { recordAction } = require('./hvacHistory.service');
+const wsHub = require('./wsHub.service');
 
 const AE200_USER    = process.env.AE200_USER     || 'administrator';
 const AE200_PASS    = process.env.AE200_PASS     || 'admin';
@@ -45,6 +46,7 @@ async function getOrCreateClient(ip) {
         syncStatesToDb(ip, states).catch(err =>
             console.error(`[${ip}] Failed to sync polled states to DB:`, err.message)
         );
+        wsHub.broadcast(ip, states);
     };
 
     console.log(`[${ip}] ✅ Connected and ready`);

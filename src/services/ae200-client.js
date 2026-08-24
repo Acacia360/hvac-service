@@ -199,8 +199,15 @@ class AE200Client {
 
     _onMessage(xml) {
         if (xml.includes('<Command>notifyRequest</Command>')) {
-            // Server push — refresh states (disabled: was firing continuously, flooding HVACs updates)
-            // this._pollAllUnits().catch(() => {});
+            console.log(`[${this.ip}] notifyRequest received:`, xml);
+            const groupIds = [...new Set([...xml.matchAll(/Group="(\d+)"/g)].map(m => m[1]))];
+            if (groupIds.length > 0) {
+                // this._refreshGroups(groupIds).catch(() => {});
+            } else {
+                // Payload didn't name any group — fall back to a full poll
+                // this._pollAllUnits().catch(() => {});
+            }
+              this._applyNotify(xml);
             return;
         }
         for (const [key, cb] of this.callbacks.entries()) {
@@ -274,6 +281,49 @@ class AE200Client {
             this._polling = false;
         }
         return this.lastStates;
+    }
+
+    /** Read just the groups named in a device push notification, instead of polling everything */
+    async _refreshGroups(groupIds) {
+        const updated = {};
+        for (const groupId of groupIds) {
+            try {
+                updated[groupId] = await this.readGroup(groupId);
+            } catch (_) {}
+        }
+        if (this.onStateUpdate && Object.keys(updated).length > 0) this.onStateUpdate(updated);
+    }
+
+    /**
+     * Apply a device push notification directly, with no request sent back to the device —
+     * the notify payload already carries the changed attributes.
+     * Address-only <Mnet> entries (ThermoStatus/SaveValue/FanStatus) are remote-controller-panel
+     * events, not group state, and carry no Group — those are skipped.
+     */
+    _applyNotify(xml) {
+        const changed = {};
+        for (const tag of xml.matchAll(/<Mnet\s+([^>]*?)\/>/g)) {
+            const attrs = {};
+            for (const attr of tag[1].matchAll(/(\w+)="([^"]*)"/g)) attrs[attr[1]] = attr[2];
+            if (attrs.Group == null) continue;
+
+            const group = attrs.Group;
+            const prev  = this.lastStates[group] || {
+                group, name: this.groups.find(g => g.group === group)?.name || group,
+            };
+            const next = { ...prev };
+            if (attrs.Drive        != null) next.drive        = attrs.Drive;
+            if (attrs.Mode         != null) next.mode          = normalizeMode(attrs.Mode);
+            if (attrs.SetTemp      != null) next.setTemp       = attrs.SetTemp;
+            if (attrs.FanSpeed     != null) next.fanSpeed      = attrs.FanSpeed;
+            if (attrs.AirDirection != null) next.airDirection  = attrs.AirDirection;
+            if (attrs.InletTemp    != null) next.inletTemp     = attrs.InletTemp;
+            next.updatedAt = new Date().toISOString();
+
+            this.lastStates[group] = next;
+            changed[group] = next;
+        }
+        if (this.onStateUpdate && Object.keys(changed).length > 0) this.onStateUpdate(changed);
     }
 
     /** Control a group */
