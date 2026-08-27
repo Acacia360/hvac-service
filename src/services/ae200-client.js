@@ -61,17 +61,55 @@ function buildLoginXml(username, password) {
 }
 
 function buildReadGroupXml(group) {
-    return xmlWrap('getRequest', `<Mnet Group="${group}" Drive="*" Mode="*" SetTemp="*" FanSpeed="*" AirDirection="*" InletTemp="*" />\r\n`);
+    return xmlWrap('getRequest', `<Mnet Group="${group}" Drive="*" Mode="*" SetTemp="*" SetTemp1="*" SetTemp2="*" SetTemp3="*" FanSpeed="*" AirDirection="*" InletTemp="*" />\r\n`);
 }
 
-function buildControlXml(group, params) {
+/**
+ * Mode -> indexed SetTemp slot the AE-200E actually enforces for that mode. The plain "SetTemp"
+ * attribute is a legacy/inactive field on this hardware — the device keeps a separate remembered
+ * setpoint per mode (SetTemp1..SetTemp5) and both the vendor UI and the physical unit read/write
+ * the indexed slot, not "SetTemp". COOL:1 was confirmed empirically by watching live device
+ * notifyRequest pushes while adjusting temperature via the AE-200E's own web UI (2026-08-26) —
+ * "SetTemp" never changed, only "SetTemp1" did. HEAT:2 / DRY:3 follow the same documented
+ * Mitsubishi AE-200/EW-50 slot convention but haven't been independently verified on this unit.
+ * FAN has no target temperature and falls back to the legacy "SetTemp" attribute.
+ * AUTO is not in this map — it has no single setpoint, see buildControlXml/_parseState.
+ */
+const MODE_SETTEMP_INDEX = { COOL: 1, HEAT: 2, DRY: 3 };
+
+function buildControlXml(group, params, currentMode) {
     let attr = `Group="${group}"`;
     if (params.drive        != null) attr += ` Drive="${params.drive}"`;
     if (params.mode         != null) attr += ` Mode="${params.mode}"`;
-    if (params.setTemp      != null) attr += ` SetTemp="${params.setTemp}"`;
+
+    const mode = (params.mode || currentMode || '').toUpperCase();
+    if (mode === 'AUTO') {
+        // Auto has no single setpoint — the AE-200E UI shows independent Cool/Heat thresholds,
+        // reusing the same SetTemp1/SetTemp2 slots as Cool/Heat modes (confirmed against room
+        // 117 / group 8: UI showed Cool:23 Heat:18, matching SetTemp1="23" SetTemp2="18" while
+        // Mode="AUTOCOOL").
+        if (params.setTempCool != null) attr += ` SetTemp1="${params.setTempCool}"`;
+        if (params.setTempHeat != null) attr += ` SetTemp2="${params.setTempHeat}"`;
+    } else if (params.setTemp != null) {
+        const idx = MODE_SETTEMP_INDEX[mode];
+        attr += idx ? ` SetTemp${idx}="${params.setTemp}"` : ` SetTemp="${params.setTemp}"`;
+    }
+
     if (params.fanSpeed     != null) attr += ` FanSpeed="${params.fanSpeed}"`;
     if (params.airDirection != null) attr += ` AirDirection="${params.airDirection}"`;
     return xmlWrap('setRequest', `<Mnet ${attr} />\r\n`);
+}
+
+/** Formats any temperature value (set or inlet) to the AE-200E web UI's own display convention:
+ *  rounded to the nearest 0.5°C step with exactly one decimal place (21 -> "21.0", 20.5 -> "20.5").
+ *  Set-temperature values are already on that grid, so rounding is a no-op there — this just adds
+ *  consistent decimal formatting. Inlet/room temperature is a continuous sensor reading, so this
+ *  actually rounds it, matching what's shown at http://<ip>/control/index.html. */
+function formatTemp(raw) {
+    if (raw == null || raw === '') return raw;
+    const num = parseFloat(raw);
+    if (Number.isNaN(num)) return raw;
+    return (Math.round(num * 2) / 2).toFixed(1);
 }
 
 /** AE-200E reports "Auto", "AutoCool", "AutoHeat", etc. for auto mode — collapse them all to "Auto". */
@@ -314,10 +352,26 @@ class AE200Client {
             const next = { ...prev };
             if (attrs.Drive        != null) next.drive        = attrs.Drive;
             if (attrs.Mode         != null) next.mode          = normalizeMode(attrs.Mode);
-            if (attrs.SetTemp      != null) next.setTemp       = attrs.SetTemp;
             if (attrs.FanSpeed     != null) next.fanSpeed      = attrs.FanSpeed;
             if (attrs.AirDirection != null) next.airDirection  = attrs.AirDirection;
-            if (attrs.InletTemp    != null) next.inletTemp     = attrs.InletTemp;
+            if (attrs.InletTemp    != null) next.inletTemp     = formatTemp(attrs.InletTemp);
+
+            // The push only carries the indexed slot that actually changed (e.g. "SetTemp1" for a
+            // Cool-mode adjustment) — apply it only when it matches the group's current active mode.
+            if (next.mode === 'AUTO') {
+                if (attrs.SetTemp1 != null) next.setTempCool = formatTemp(attrs.SetTemp1);
+                if (attrs.SetTemp2 != null) next.setTempHeat = formatTemp(attrs.SetTemp2);
+                next.setTemp = null;
+            } else {
+                const activeIdx = MODE_SETTEMP_INDEX[next.mode];
+                if (attrs.SetTemp != null && !activeIdx) next.setTemp = formatTemp(attrs.SetTemp);
+                if (activeIdx === 1 && attrs.SetTemp1 != null) next.setTemp = formatTemp(attrs.SetTemp1);
+                if (activeIdx === 2 && attrs.SetTemp2 != null) next.setTemp = formatTemp(attrs.SetTemp2);
+                if (activeIdx === 3 && attrs.SetTemp3 != null) next.setTemp = formatTemp(attrs.SetTemp3);
+                next.setTempCool = undefined;
+                next.setTempHeat = undefined;
+            }
+
             next.updatedAt = new Date().toISOString();
 
             this.lastStates[group] = next;
@@ -329,7 +383,8 @@ class AE200Client {
     /** Control a group */
     async controlGroup(groupId, params) {
         this._ensureConnected();
-        const resp = await this._send(buildControlXml(groupId, params), 'Mnet');
+        const currentMode = this.lastStates[groupId]?.mode;
+        const resp = await this._send(buildControlXml(groupId, params, currentMode), 'Mnet');
         if (resp.includes('getErrorResponse')) {
             const msg = resp.match(/Message="([^"]+)"/)?.[1] || 'Error';
             throw new Error(`Control failed: ${msg}`);
@@ -365,17 +420,36 @@ class AE200Client {
 
     _parseState(xml, groupId) {
         const g = this.groups.find(g => g.group === String(groupId));
-        return {
+        const mode = normalizeMode(xml.match(/Mode="([^"]+)"/)?.[1]) || null;
+
+        const state = {
             group:        String(groupId),
             name:         g?.name || String(groupId),
             drive:        xml.match(/Drive="([^"]+)"/)?.[1]        || null,
-            mode:         normalizeMode(xml.match(/Mode="([^"]+)"/)?.[1]) || null,
-            setTemp:      xml.match(/SetTemp="([^"]+)"/)?.[1]      || null,
+            mode,
             fanSpeed:     xml.match(/FanSpeed="([^"]+)"/)?.[1]     || null,
             airDirection: xml.match(/AirDirection="([^"]+)"/)?.[1] || null,
-            inletTemp:    xml.match(/InletTemp="([^"]+)"/)?.[1]    || null,
+            inletTemp:    formatTemp(xml.match(/InletTemp="([^"]+)"/)?.[1]) || null,
             updatedAt:    new Date().toISOString(),
         };
+
+        if (mode === 'AUTO') {
+            // No single setpoint in Auto — see MODE_SETTEMP_INDEX comment for how this was confirmed.
+            state.setTemp     = null;
+            state.setTempCool = formatTemp(xml.match(/SetTemp1="([^"]+)"/)?.[1]) || null;
+            state.setTempHeat = formatTemp(xml.match(/SetTemp2="([^"]+)"/)?.[1]) || null;
+        } else {
+            const setTempLegacy  = xml.match(/SetTemp="([^"]+)"/)?.[1] || null;
+            const idx            = MODE_SETTEMP_INDEX[mode];
+            const setTempIndexed = idx ? xml.match(new RegExp(`SetTemp${idx}="([^"]+)"`))?.[1] : null;
+            state.setTemp     = formatTemp(setTempIndexed || setTempLegacy);
+            // Explicit nulls (not omitted) so a full poll clears stale Auto-mode thresholds in the DB
+            // after a mode switch — see hvacSync.service.js's stateToHvacFields.
+            state.setTempCool = null;
+            state.setTempHeat = null;
+        }
+
+        return state;
     }
 
     disconnect() {

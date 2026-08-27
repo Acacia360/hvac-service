@@ -1,7 +1,7 @@
 const { fail } = require('../utils/response');
 
 function validateControlBody(req, res, next) {
-    const validKeys = ['drive', 'mode', 'setTemp', 'fanSpeed', 'airDirection'];
+    const validKeys = ['drive', 'mode', 'setTemp', 'setTempCool', 'setTempHeat', 'fanSpeed', 'airDirection'];
     const provided  = validKeys.filter(k => req.body[k] != null);
     if (provided.length === 0) {
         return fail(res, `Provide at least one of: ${validKeys.join(', ')}`, 400);

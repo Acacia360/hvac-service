@@ -55,6 +55,8 @@ async function controlRoom(req, res) {
             drive:        req.body.drive ?? room.hvac_status,
             mode:         req.body.mode ?? room.hvac_operation_mode,
             setTemp:      req.body.setTemp ?? room.hvac_temperature,
+            setTempCool:  req.body.setTempCool ?? room.hvac_temperature_cool,
+            setTempHeat:  req.body.setTempHeat ?? room.hvac_temperature_heat,
             fanSpeed:     req.body.fanSpeed ?? room.hvac_fan_speed,
             airDirection: req.body.airDirection ?? room.hvac_air_direction,
             inletTemp:    room.hvac_inlet_temperature,

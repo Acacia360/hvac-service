@@ -10,7 +10,9 @@ function stateToHvacFields(state) {
     const fields = { update_at: state.updatedAt };
     if (state.drive        !== undefined) fields.hvac_status            = state.drive;
     if (state.mode         !== undefined) fields.hvac_operation_mode    = state.mode;
-    if (state.setTemp      !== undefined) fields.hvac_temperature       = state.setTemp != null ? parseFloat(state.setTemp) : null;
+    if (state.setTemp      !== undefined) fields.hvac_temperature       = state.setTemp;
+    if (state.setTempCool  !== undefined) fields.hvac_temperature_cool  = state.setTempCool;
+    if (state.setTempHeat  !== undefined) fields.hvac_temperature_heat  = state.setTempHeat;
     if (state.fanSpeed     !== undefined) fields.hvac_fan_speed         = state.fanSpeed;
     if (state.airDirection !== undefined) fields.hvac_air_direction     = state.airDirection;
     if (state.inletTemp    !== undefined) fields.hvac_inlet_temperature = state.inletTemp;

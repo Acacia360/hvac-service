@@ -28,7 +28,7 @@ const HVACData = sequelize.define('HVACData', {
         type: DataTypes.STRING
     },
     hvac_temperature: {
-        type: DataTypes.FLOAT
+        type: DataTypes.STRING
     },
     hvac_fan_speed: {
         type: DataTypes.STRING

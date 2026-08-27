@@ -14,7 +14,7 @@ async function recordAction(hvacRow, state) {
         hvac_room_id:           hvacRow.hvac_room_id,
         hvac_status:            state.drive,
         hvac_operation_mode:    state.mode,
-        hvac_temperature:       state.setTemp != null ? parseFloat(state.setTemp) : null,
+        hvac_temperature:       state.setTemp,
         hvac_fan_speed:         state.fanSpeed,
         hvac_air_direction:     state.airDirection,
         hvac_inlet_temperature: state.inletTemp,
