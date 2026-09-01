@@ -1,6 +1,5 @@
 name: HVAC Service CI/CD Pipeline
 
-
 on:
   push:
     branches: [ "main" ]
