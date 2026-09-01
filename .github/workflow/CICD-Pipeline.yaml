@@ -1,0 +1,87 @@
+name: HVAC Service CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main"]
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  # =========================================================
+  # PHASE 1: UNIT TESTS & REPORTING
+  # =========================================================
+  build-and-test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: hvac_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests
+        env:
+          NODE_ENV: test
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: test_user 
+          DB_PASSWORD: postgres
+          DB_NAME: hvac_db
+          JWT_SECRET: 'super_secret_dummy_test_key_123'
+          JEST_JUNIT_OUTPUT_DIR: ./reports
+          JEST_JUNIT_OUTPUT_NAME: test-report.xml
+        run: npm test -- --ci --reporters=default --reporters=jest-junit
+
+      - name: Publish Test Report
+        uses: dorny/test-reporter@v1
+        if: always() 
+        with:
+          name: Jest Test Results
+          path: reports/test-report.xml
+          reporter: jest-junit
+
+  # =========================================================
+  # PHASE 2: BUILD, PUSH & DEPLOY (Reusable Pipeline)
+  # =========================================================
+  call-central-pipeline:
+    # CRITICAL: This ensures deployment ONLY happens if Phase 1 tests pass
+    needs: build-and-test
+    
+    # CRITICAL: This restricts the deployment phase to only run for the 'main' branch
+    if: github.ref == 'refs/heads/main' || github.base_ref == 'main'
+    
+    uses: Acacia360/acacia360-app-chart/.github/workflows/reusable-microservice-pipeline.yml@main
+    with:
+      service_name: hvac-service
+      docker_image_name: acaciagreentechnologies/hvac-service
+    secrets:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}

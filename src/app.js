@@ -89,4 +89,8 @@ async function start() {
 process.on('SIGINT',  () => { disconnectAll(); process.exit(0); });
 process.on('SIGTERM', () => { disconnectAll(); process.exit(0); });
 
-start();
+if (require.main === module) {
+    start();
+}
+
+module.exports = app;
