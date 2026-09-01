@@ -20,6 +20,7 @@
  *   POST /api/devices/10.0.1.50/units/1/control
  */
 
+const http    = require('http');
 const express = require('express');
 const cors    = require('cors');
 const routes  = require('./routes');
@@ -28,6 +29,7 @@ const sequelize = require('./config/database');
 require('./models/HVAC');
 const { getOrCreateClient, getKnownControllerIps, disconnectAll } = require('./services/deviceRegistry.service');
 const { standardAPILogger, errorAPILogger } = require('./middleware/apiLogger');
+const wsHub = require('./services/wsHub.service');
 
 const API_PORT = process.env.PORT || 3099;
 
@@ -73,8 +75,12 @@ async function start() {
         ))
     );
 
-    app.listen(API_PORT, () => {
+    const server = http.createServer(app);
+    wsHub.init(server);
+
+    server.listen(API_PORT, () => {
         console.log(`\n✅ AE-200E REST API running on http://localhost:${API_PORT}`);
+        console.log(`   WS   frontend push       ws://localhost:${API_PORT}/ws/hvac`);
         console.log(`\n📋 Example endpoints:`);
         console.log(`   GET  http://localhost:${API_PORT}/api/devices`);
         console.log(`   GET  http://localhost:${API_PORT}/api/devices/10.0.1.50/units`);

@@ -5,16 +5,18 @@
 
 const HVAC = require('../models/HVAC');
 
+/** Only includes columns the state actually carries — a partial (notify-sourced) state must not null out fields it has no data for. */
 function stateToHvacFields(state) {
-    return {
-        hvac_status:            state.drive,
-        hvac_operation_mode:    state.mode,
-        hvac_temperature:       state.setTemp != null ? parseFloat(state.setTemp) : null,
-        hvac_fan_speed:         state.fanSpeed,
-        hvac_air_direction:     state.airDirection,
-        hvac_inlet_temperature: state.inletTemp,
-        update_at:              state.updatedAt,
-    };
+    const fields = { update_at: state.updatedAt };
+    if (state.drive        !== undefined) fields.hvac_status            = state.drive;
+    if (state.mode         !== undefined) fields.hvac_operation_mode    = state.mode;
+    if (state.setTemp      !== undefined) fields.hvac_temperature       = state.setTemp;
+    if (state.setTempCool  !== undefined) fields.hvac_temperature_cool  = state.setTempCool;
+    if (state.setTempHeat  !== undefined) fields.hvac_temperature_heat  = state.setTempHeat;
+    if (state.fanSpeed     !== undefined) fields.hvac_fan_speed         = state.fanSpeed;
+    if (state.airDirection !== undefined) fields.hvac_air_direction     = state.airDirection;
+    if (state.inletTemp    !== undefined) fields.hvac_inlet_temperature = state.inletTemp;
+    return fields;
 }
 
 /** Persists live states (as returned by AE200Client#getCachedStates) into the matching HVAC rows for one controller */

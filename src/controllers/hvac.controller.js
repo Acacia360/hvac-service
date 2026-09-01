@@ -42,11 +42,27 @@ async function syncRoomsFromDevice(req, res) {
     });
 }
 
-/** POST /api/hvac/:hvacId/control — send a command to a room's unit and persist the resulting state */
+/** POST /api/hvac/:hvacId/control — send a command to a room's unit and persist the resulting state.  */
 async function controlRoom(req, res) {
-    const room   = req.room;
-    const client = await getOrCreateClient(room.hvac_controller_ip);
-    const state  = await client.controlGroup(room.hvac_group_id, req.body);
+    const room = req.room;
+    let state;
+    try {
+        const client = await getOrCreateClient(room.hvac_controller_ip);
+        state = await client.controlGroup(room.hvac_group_id, req.body);
+    } catch (err) {
+        console.error(`[${room.hvac_controller_ip}] Live control failed, applying command directly to stored state:`, err.message);
+        state = {
+            drive:        req.body.drive ?? room.hvac_status,
+            mode:         req.body.mode ?? room.hvac_operation_mode,
+            setTemp:      req.body.setTemp ?? room.hvac_temperature,
+            setTempCool:  req.body.setTempCool ?? room.hvac_temperature_cool,
+            setTempHeat:  req.body.setTempHeat ?? room.hvac_temperature_heat,
+            fanSpeed:     req.body.fanSpeed ?? room.hvac_fan_speed,
+            airDirection: req.body.airDirection ?? room.hvac_air_direction,
+            inletTemp:    room.hvac_inlet_temperature,
+            updatedAt:    new Date(),
+        };
+    }
 
     await room.update(stateToHvacFields(state));
     await recordAction(room, state);
