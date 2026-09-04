@@ -30,6 +30,7 @@ require('./models/HVAC');
 const { getOrCreateClient, getKnownControllerIps, disconnectAll } = require('./services/deviceRegistry.service');
 const { standardAPILogger, errorAPILogger } = require('./middleware/apiLogger');
 const wsHub = require('./services/wsHub.service');
+const { startHvacHealthCheckCron } = require('./cron/hvacHealthCheck.cron');
 
 const API_PORT = process.env.PORT || 3099;
 
@@ -74,6 +75,8 @@ async function start() {
             console.error(`[${ip}] ❌ Failed on startup: ${err.message}`)
         ))
     );
+
+    startHvacHealthCheckCron();
 
     const server = http.createServer(app);
     wsHub.init(server);
