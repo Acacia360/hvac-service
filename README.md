@@ -1,5 +1,7 @@
 # HVAC Service Service
 
+> 📘 **New to this service? Start with the [Developer Guide](docs/SERVICE_GUIDE.md).** It covers what the service does, flow diagrams, the API, database, setup and deployment, and is kept in line with the current code. Parts of this README below are out of date.
+
 A comprehensive Node.js/Express REST API service for managing real-time data logging, Milesight gateway support.
 
 ## ✨ Features
