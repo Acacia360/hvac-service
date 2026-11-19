@@ -57,6 +57,11 @@ const app = require('../app');
 
 describe('HVAC API Endpoints', () => {
   beforeAll(async () => {
+    // Second safety net: sync({ force: true }) drops every table — only ever on a *_test DB.
+    const dbName = db.sequelize.getDatabaseName();
+    if (!/_test$/.test(dbName)) {
+      throw new Error(`Refusing to drop tables in "${dbName}": tests must use a *_test database.`);
+    }
     await db.sequelize.sync({ force: true });
   });
 

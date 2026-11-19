@@ -39,8 +39,8 @@ async function getOrCreateClient(ip) {
     const client = new AE200Client(ip, AE200_USER, AE200_PASS);
     clients[ip] = client;
 
-    await client.connect();
-    // client.startPolling(POLL_INTERVAL);
+    // Attach before connecting: if the first connect fails, the client keeps retrying in the
+    // background and must still push states once it reconnects.
     client.onStateUpdate = (states) => {
         console.log(`[${ip}] State refreshed — ${Object.keys(states).length} units`);
         syncStatesToDb(ip, states).catch(err =>
@@ -48,6 +48,9 @@ async function getOrCreateClient(ip) {
         );
         wsHub.broadcast(ip, states);
     };
+
+    await client.connect();
+    // client.startPolling(POLL_INTERVAL);
 
     console.log(`[${ip}] ✅ Connected and ready`);
     return client;

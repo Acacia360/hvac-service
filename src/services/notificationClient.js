@@ -2,9 +2,16 @@ const axios = require('axios');
 
 const NOTIFICATIONS_SERVICE_URL = process.env.NOTIFICATIONS_SERVICE_URL || 'http://localhost:3005';
 
-/** Create a device error notification in notifications-service. errorType e.g. "unreachable" | "db_write_error". */
+const ERROR_TEXT = {
+    unreachable:      ip => `HVAC controller "${ip}" is not connected and needs attention.`,
+    group_read_error: ip => `HVAC controller "${ip}" is connected but some rooms could not be read.`,
+    db_write_error:   ip => `HVAC controller "${ip}" data could not be saved to the database.`,
+};
+
+/** Create a device error notification in notifications-service. errorType: "unreachable" | "group_read_error" | "db_write_error". */
 async function createDeviceErrorNotification({ controllerIp, propertyId, errorMessage, errorType = 'unreachable' }) {
     try {
+        const text = (ERROR_TEXT[errorType] || ERROR_TEXT.unreachable)(controllerIp);
         const payload = {
             notifications_scope: 'property',
             ...(propertyId ? { notifications_property_id: propertyId } : {}),
@@ -12,7 +19,7 @@ async function createDeviceErrorNotification({ controllerIp, propertyId, errorMe
             notifications_dedup_key: `hvac-device-error:${controllerIp}:${errorType}`,
             notifications_status: 'critical',
             notifications_category: 'device_alert',
-            notifications_text: `HVAC controller "${controllerIp}" is not responding and needs attention.`,
+            notifications_text: text,
             notifications_value: `${errorType} Error: ${errorMessage} (IP: ${controllerIp})`,
             notifications_metric: 'controller_ip',
             notifications_email_requested: true,

@@ -301,24 +301,34 @@ class AE200Client {
         return state;
     }
 
-    /** Read all groups and cache results */
+    /**
+     * Read all groups and cache results.
+     * Returns { states, failed, skipped }: `states` holds only the groups read fresh in this cycle
+     * (never stale cached ones), `failed` lists each group whose read failed and why.
+     */
     async _pollAllUnits() {
         if (this._polling) {
             console.warn(`[${this.ip}] Skipping poll — previous cycle still in progress`);
-            return this.lastStates;
+            return { states: {}, failed: [], skipped: true };
         }
         this._polling = true;
+        const states = {};
+        const failed = [];
         try {
             for (const g of this.groups) {
                 try {
-                    await this.readGroup(g.group);
-                } catch (_) {}
+                    states[g.group] = await this.readGroup(g.group);
+                } catch (err) {
+                    failed.push({ group: g.group, name: g.name, error: err.message });
+                }
             }
-            if (this.onStateUpdate) this.onStateUpdate(this.lastStates);
+            if (failed.length > 0)
+                console.warn(`[${this.ip}] ${failed.length}/${this.groups.length} group read(s) failed`);
+            if (this.onStateUpdate && Object.keys(states).length > 0) this.onStateUpdate(states);
         } finally {
             this._polling = false;
         }
-        return this.lastStates;
+        return { states, failed, skipped: false };
     }
 
     /** Read just the groups named in a device push notification, instead of polling everything */
@@ -405,8 +415,14 @@ class AE200Client {
         if (this._pollTimer) { clearInterval(this._pollTimer); this._pollTimer = null; }
     }
 
-    /** Force a live read of every group, on demand (no timer, no device push involved) */
-    refreshAll() { return this._pollAllUnits(); }
+    /**
+     * Force a live read of every group, on demand (no timer, no device push involved).
+     * Throws if the controller session is down; otherwise resolves to { states, failed, skipped }.
+     */
+    async refreshAll() {
+        this._ensureConnected();
+        return this._pollAllUnits();
+    }
 
     /** Get cached states (instant, no WS call) */
     getCachedStates() { return this.lastStates; }
